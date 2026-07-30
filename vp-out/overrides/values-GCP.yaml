@@ -1,0 +1,10 @@
+# Platform-specific overrides for GCP
+
+# Object storage backend for this platform.
+# Change provider to match your environment.
+# Providers: minio (in-cluster), odf (OpenShift Data Foundation), s3 (external S3)
+# objectStorage:
+#   provider: s3
+#   endpoint: https://storage.googleapis.com
+#   region: us-central1
+#   bucket: <your-pre-existing-bucket-name>

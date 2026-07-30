@@ -1,0 +1,236 @@
+# secure-agent-workspace — ApplicationSpec
+#
+# This file is the source of truth for the Secure Agent Workspace pattern.
+# Edit this file, then regenerate the outputs:
+#
+#   quickpat compose spec.yaml            # → vp-out/  (Validated Pattern, ArgoCD)
+#   quickpat compose spec.yaml --format qs  # → qs-out/ (Helm chart, direct install)
+#
+# Docs:
+#   Spec format:  https://github.com/atyronesmith/quickpat/blob/main/docs/compose-tutorial.md
+#   Block catalog: https://github.com/atyronesmith/quickpat/blob/main/docs/compose-tutorial.md#block-types
+#   Adding blocks: https://github.com/atyronesmith/quickpat/blob/main/docs/adding-block-types.md
+
+apiVersion: supplychain/v1alpha1
+kind: ApplicationSpec
+
+metadata:
+  name: secure-agent-workspace
+  description: >-
+    Isolated, per-user AI agent sandboxes on OpenShift Virtualization.
+    Each user gets a dedicated KubeVirt VM running NVIDIA OpenShell with
+    OIDC authentication (RHBK) and Vault-managed inference provider keys.
+  tier: sandbox
+  partner: NVIDIA
+
+  # upstream: points to the existing QS/VP repo that holds the source charts.
+  # The custom components below copy charts from this repo into the VP output.
+  # There is no separate QS Helm chart — all components ship as custom charts.
+  upstream:
+    repo: https://github.com/validatedpatterns-sandbox/secure-agent-workspace.git
+    branch: main
+
+# ── Blocks ───────────────────────────────────────────────────────────────────
+#
+# Block types openshift-virtualization, keycloak-oidc, and vm-workspace are
+# registered in quickpat/compose/blocks.py and quickpat/operators.py.
+# See docs/adding-block-types.md for how these were added.
+
+blocks:
+
+  # ── openshift-virtualization ────────────────────────────────────────────────
+  # Installs kubevirt-hyperconverged and creates a HyperConverged CR (chart:
+  # charts/openshift-cnv). Provides KubeVirt + CDI runtime that all sandbox
+  # VMs depend on. CDI DataSource for the golden image is registered by the
+  # image-builder custom component below.
+  virtualization:
+    type: openshift-virtualization
+
+  # ── keycloak-oidc ───────────────────────────────────────────────────────────
+  # Installs RHBK (rhbk-operator, channel: stable-v26) and deploys a Keycloak
+  # CR + KeycloakRealmImport via charts/openshell-keycloak.
+  # Outputs: issuer_url — consumed by the sandbox chart at deploy time.
+  # VP path: issuer URL computed from global.clusterDomain (injected by ArgoCD).
+  # QS path: detected from the Keycloak route at openshell-saw-create time.
+  identity:
+    type: keycloak-oidc
+    config:
+      realm: openshell
+      operator_channel: stable-v26
+      # Test users pre-loaded into the realm for dev and E2E testing.
+      # Remove or replace with an enterprise IdP federation in production.
+      test_users:
+        - { username: alice,     password: alice,     roles: [openshell-user, openshell-admin] }
+        - { username: bob,       password: bob,       roles: [openshell-user] }
+        - { username: developer, password: developer, roles: [openshell-user] }
+        - { username: admin,     password: admin,     roles: [openshell-user, openshell-admin] }
+
+  # ── vm-workspace ────────────────────────────────────────────────────────────
+  # Provisions per-user KubeVirt VMs from a CDI clone of the bootc golden
+  # image built by the image-builder custom component. Each VM runs the
+  # OpenShell gateway and an AI agent (OpenClaw or NemoClaw). The gateway
+  # validates the user's OIDC token before granting sandbox access.
+  # outputs: gateway_route (gRPC/TLS passthrough), dashboard_route (edge TLS)
+  sandbox:
+    type: vm-workspace
+    config:
+      # shared: all VMs in openshell-agents namespace (scales to thousands)
+      # perUser: each user gets saw-<username> namespace (K8s-level isolation)
+      namespace_mode: shared
+      default_provider: gemini
+      default_model: gemini-2.5-flash
+      resources:
+        cpu: 4
+        memory: 8Gi
+        disk: 40Gi
+      image:
+        # bootc: Fedora 44 golden image, pre-baked with OpenShell + podman + nodejs.
+        # Built in-cluster via BuildConfig (~15 min, one-time). CDI DataSource is
+        # created by image-builder and cloned per user at sandbox creation time.
+        # Set source: prebuilt once NVIDIA publishes upstream golden images.
+        type: bootc
+        source: build
+    secrets:
+      # SSH keypair — generated at first deploy (make generate-keys or Vault policy).
+      # Private key is injected into VMs at boot; public key goes into authorized_keys.
+      ssh-private-key:
+        vault_path: secure-agent-workspace/ssh
+        key: private_key
+        generate: true
+      ssh-public-key:
+        vault_path: secure-agent-workspace/ssh
+        key: public_key
+        generate: true
+    inputs:
+      # OIDC issuer URL from the keycloak-oidc block — gateway uses this to
+      # fetch JWKS and validate user tokens.
+      oidc_issuer: "{{ blocks.identity.output.issuer_url }}"
+
+# ── Secrets ──────────────────────────────────────────────────────────────────
+#
+# At least ONE inference provider key must be set. All others may be skipped.
+# onMissingValue: skip creates the ExternalSecret but leaves the Vault path
+# empty until the operator populates it — the sandbox will fail to start for
+# that provider until the key is loaded.
+
+secrets:
+  - name: anthropic-api-key
+    vault_path: secure-agent-workspace/anthropic
+    key: api_key
+    onMissingValue: skip
+
+  - name: gemini-api-key
+    vault_path: secure-agent-workspace/gemini
+    key: api_key
+    onMissingValue: skip
+
+  - name: openai-api-key
+    vault_path: secure-agent-workspace/openai
+    key: api_key
+    onMissingValue: skip
+
+  - name: nvidia-api-key
+    vault_path: secure-agent-workspace/nvidia
+    key: api_key
+    onMissingValue: skip
+
+  - name: openrouter-api-key
+    vault_path: secure-agent-workspace/openrouter
+    key: api_key
+    onMissingValue: skip
+
+  - name: vertex-sa-json
+    vault_path: secure-agent-workspace/vertex
+    key: sa_json
+    onMissingValue: skip
+
+  # Optional web search integrations
+  - name: tavily-api-key
+    vault_path: secure-agent-workspace/tavily
+    key: api_key
+    onMissingValue: skip
+
+  - name: brave-search-api-key
+    vault_path: secure-agent-workspace/brave-search
+    key: api_key
+    onMissingValue: skip
+
+vault:
+  enabled: true
+
+# ── Wiring ───────────────────────────────────────────────────────────────────
+
+wiring:
+  - from: identity
+    to: sandbox
+    via: oidc-jwks         # gateway fetches JWKS from Keycloak to validate JWTs
+  - from: virtualization
+    to: sandbox
+    via: kubevirt-runtime  # sandbox VMs run on the CNV hypervisor
+  - from: image-builder
+    to: sandbox
+    via: cdi-datasource    # per-user VMs are CDI clones of the golden image
+
+# ── Custom Components ─────────────────────────────────────────────────────────
+#
+# All charts are hand-written (charts/ directory). There is no upstream QS
+# Helm chart — the entire application ships as custom components.
+# The compiler copies these charts into vp-out/charts/ and wires them as
+# ArgoCD applications in values-prod.yaml.
+
+custom:
+  # Internal registry — required target for BuildConfig push.
+  openshift-registry:
+    description: Enable OpenShift integrated image registry
+    source:
+      chart: charts/openshift-registry
+
+  # CNV/KubeVirt activation — HyperConverged CR.
+  # Depends on the openshift-virtualization operator (from the virtualization block).
+  openshift-cnv:
+    description: HyperConverged CR to activate KubeVirt + CDI
+    source:
+      chart: charts/openshift-cnv
+    namespace: openshift-cnv
+
+  # Keycloak identity provider — CR + KeycloakRealmImport.
+  # Depends on the rhbk operator (from the identity block).
+  openshell-keycloak:
+    description: RHBK Keycloak instance and openshell realm
+    source:
+      chart: charts/openshell-keycloak
+    namespace: openshell-agents
+
+  # Vault-managed secrets → ExternalSecrets for each inference provider.
+  pattern-secrets:
+    description: ExternalSecrets for inference provider API keys and SSH keys
+    source:
+      chart: charts/pattern-secrets
+    namespace: openshell-agents
+
+  # Per-user sandbox VMs — CDI clone + OpenShell gateway + routes.
+  # Uses overrides/openshell-saw.yaml for default sandbox configuration.
+  openshell-saw:
+    description: Per-user KubeVirt VM sandbox with OpenShell gateway and AI agent
+    source:
+      chart: charts/openshell-saw
+    namespace: openshell-agents
+    extraValueFiles:
+      - /overrides/openshell-saw.yaml
+
+  # Golden image build pipeline (one-time, ~15 min).
+  # Builds Fedora 44 + OpenShell via bootc and registers the CDI DataSource
+  # used for per-user VM cloning.
+  # Three sub-charts: nemoclaw-imagestream, nemoclaw-cli-imagestream,
+  # openshell-gateway-image (all under image-builder-charts/helm/).
+  image-builder:
+    description: Bootc image build pipeline — NemoClaw and OpenShell gateway VM image
+    source:
+      chart: image-builder-charts/helm
+    namespace: build-saw-images
+
+options:
+  syncPolicy: Automatic
+  installPlanApproval: Automatic
+  clustergroup_version: "0.9.*"
+  multiSourceConfig: true

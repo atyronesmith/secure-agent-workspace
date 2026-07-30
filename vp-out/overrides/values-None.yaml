@@ -1,0 +1,7 @@
+# Platform-specific overrides for None
+
+# Object storage backend for this platform.
+# Change provider to match your environment.
+# Providers: minio (in-cluster), odf (OpenShift Data Foundation), s3 (external S3)
+# objectStorage:
+#   provider: minio  # default for bare metal

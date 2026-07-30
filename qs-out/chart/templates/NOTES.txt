@@ -1,0 +1,6 @@
+secure-agent-workspace has been installed.
+
+PREREQUISITES (must be installed before this chart):
+
+After install, retrieve the application route with:
+  oc get route secure-agent-workspace-app -n secure-agent-workspace -o jsonpath="{.spec.host}"

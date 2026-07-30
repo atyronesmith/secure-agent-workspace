@@ -1,0 +1,151 @@
+name: Compose and Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  compose-and-validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install QuickPat
+        run: pip install git+https://github.com/atyronesmith/quickpat.git
+
+      - name: Install Helm
+        uses: azure/setup-helm@v5
+
+      - name: Install kubeconform
+        run: |
+          curl -sL https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz \
+            | tar xz -C /usr/local/bin
+
+      - name: Compose VP
+        run: quickpat compose spec.yaml --output /tmp/vp-out
+
+      - name: Validate VP
+        id: validate
+        run: |
+          quickpat validate /tmp/vp-out --json > /tmp/vp-out/validation-report.json || true
+          quickpat validate /tmp/vp-out
+
+      - name: Helm lint (all charts)
+        id: helm_lint
+        run: |
+          STATUS="SKIP"
+          for chart_dir in /tmp/vp-out/charts/*/; do
+            [ -f "$chart_dir/Chart.yaml" ] || continue
+            echo "Linting: $(basename "$chart_dir")"
+            if helm lint "$chart_dir" 2>&1; then
+              STATUS="PASS"
+            else
+              STATUS="FAIL"
+            fi
+          done
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Helm template (secrets chart)
+        run: |
+          for chart_dir in /tmp/vp-out/charts/*-secrets/; do
+            [ -f "$chart_dir/Chart.yaml" ] || continue
+            echo "Rendering: $(basename "$chart_dir")"
+            helm template test "$chart_dir" \
+              --set global.pattern="secure-agent-workspace" \
+              --set global.namespace="openshell-agents" 2>&1
+          done
+
+      - name: Validate manifests (kubeconform)
+        id: kubeconform
+        run: |
+          STATUS="SKIP"
+          for chart_dir in /tmp/vp-out/charts/*/; do
+            [ -f "$chart_dir/Chart.yaml" ] || continue
+            echo "Validating: $(basename "$chart_dir")"
+            RENDERED=$(helm template test "$chart_dir" 2>/dev/null) || continue
+            if echo "$RENDERED" | kubeconform -summary -strict -ignore-missing-schemas 2>&1; then
+              [ "$STATUS" = "SKIP" ] && STATUS="PASS"
+            else
+              STATUS="FAIL"
+            fi
+          done
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+
+      - name: Upload generated VP
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: vp-out
+          path: /tmp/vp-out
+          retention-days: 7
+
+      - name: Compose QS
+        run: quickpat compose spec.yaml --format qs --output /tmp/qs-out
+
+      - name: Upload generated QS
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: qs-out
+          path: /tmp/qs-out
+          retention-days: 7
+
+      - name: Write job summary
+        if: always()
+        run: |
+          VALIDATE_STATUS="${{ steps.validate.outcome }}"
+          HELM_STATUS="${{ steps.helm_lint.outputs.status }}"
+          KUBE_STATUS="${{ steps.kubeconform.outputs.status }}"
+
+          {
+            echo "## secure-agent-workspace compose results"
+            echo ""
+            echo "| Step | Status |"
+            echo "|---|---|"
+            echo "| quickpat validate | $VALIDATE_STATUS |"
+            echo "| helm lint | $HELM_STATUS |"
+            echo "| kubeconform | $KUBE_STATUS |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VALIDATE_STATUS="${{ steps.validate.outcome }}"
+          HELM_STATUS="${{ steps.helm_lint.outputs.status }}"
+          KUBE_STATUS="${{ steps.kubeconform.outputs.status }}"
+          MARKER="<!-- saw-compose-summary -->"
+          BODY="${MARKER}
+          ## Secure Agent Workspace — compose results
+
+          | Step | Status |
+          |---|---|
+          | quickpat validate | $VALIDATE_STATUS |
+          | helm lint | $HELM_STATUS |
+          | kubeconform | $KUBE_STATUS |"
+
+          REPO="${{ github.repository }}"
+          PR="${{ github.event.pull_request.number }}"
+
+          EXISTING=$(gh pr view "$PR" --repo "$REPO" \
+            --json comments --jq '.comments[] | select(.body | contains("saw-compose-summary")) | .id' \
+            2>/dev/null | head -1)
+
+          if [ -n "$EXISTING" ]; then
+            gh api "repos/${REPO}/issues/comments/${EXISTING}" -X PATCH -f body="$BODY"
+          else
+            gh pr comment "$PR" --repo "$REPO" --body "$BODY"
+          fi
