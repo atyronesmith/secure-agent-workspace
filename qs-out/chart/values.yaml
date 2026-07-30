@@ -4,8 +4,6 @@
 # ── Secrets ──────────────────────────────────────────────────────────
 # Fill these in before helm install, or use scripts/create-secrets.sh
 secrets:
-  sandboxPrivate_key: ""
-  sandboxPublic_key: ""
 
 # ── virtualization (openshift-virtualization) ──
 

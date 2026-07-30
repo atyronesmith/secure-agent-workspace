@@ -23,12 +23,10 @@ metadata:
   tier: sandbox
   partner: NVIDIA
 
-  # upstream: points to the existing QS/VP repo that holds the source charts.
-  # The custom components below copy charts from this repo into the VP output.
-  # There is no separate QS Helm chart — all components ship as custom charts.
-  upstream:
-    repo: https://github.com/validatedpatterns-sandbox/secure-agent-workspace.git
-    branch: main
+  # No upstream QS chart — all components ship as custom charts in this repo.
+  # (Setting upstream.repo would cause the compiler to generate a spurious
+  # remote ArgoCD app pointing at the original SAW repo.)
+  upstream: {}
 
 # ── Blocks ───────────────────────────────────────────────────────────────────
 #
@@ -90,17 +88,8 @@ blocks:
         # Set source: prebuilt once NVIDIA publishes upstream golden images.
         type: bootc
         source: build
-    secrets:
-      # SSH keypair — generated at first deploy (make generate-keys or Vault policy).
-      # Private key is injected into VMs at boot; public key goes into authorized_keys.
-      ssh-private-key:
-        vault_path: secure-agent-workspace/ssh
-        key: private_key
-        generate: true
-      ssh-public-key:
-        vault_path: secure-agent-workspace/ssh
-        key: public_key
-        generate: true
+    # SSH key ExternalSecrets are in the pattern-secrets custom chart.
+    # Block-level secrets here would generate a duplicate secrets chart.
     inputs:
       # OIDC issuer URL from the keycloak-oidc block — gateway uses this to
       # fetch JWKS and validate user tokens.
@@ -184,6 +173,7 @@ custom:
     description: Enable OpenShift integrated image registry
     source:
       chart: charts/openshift-registry
+    namespace: openshift-image-registry
 
   # CNV/KubeVirt activation — HyperConverged CR.
   # Depends on the openshift-virtualization operator (from the virtualization block).

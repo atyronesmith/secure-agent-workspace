@@ -13,17 +13,8 @@ The following operators are automatically installed by the Validated Pattern:
 
 | Operator | Subscription | Channel | Source |
 |----------|-------------|---------|--------|
-| OpenShift Virtualization | kubevirt-hyperconverged | stable | redhat-operators |
 | Red Hat Build of Keycloak | rhbk-operator | stable-v26 | redhat-operators |
-
-## Secrets Configuration
-
-The following secrets were detected and should be configured before deployment:
-
-| Secret | Values Path | Action |
-|--------|-------------|--------|
-| `sandbox-ssh-private-key` | `secure-agent-workspace/ssh` | Set via Vault or values |
-| `sandbox-ssh-public-key` | `secure-agent-workspace/ssh` | Set via Vault or values |
+| OpenShift Virtualization | kubevirt-hyperconverged | stable | redhat-operators |
 
 ## Framework Architecture
 
@@ -43,7 +34,7 @@ The `pattern.sh` script runs all make targets inside a podman-based utility cont
 - **Application name:** secure-agent-workspace
 - **Namespace:** secure-agent-workspace
 - **Chart strategy:** remote
-- **Vault enabled:** True
+- **Vault enabled:** False
 
 ## Deployment
 

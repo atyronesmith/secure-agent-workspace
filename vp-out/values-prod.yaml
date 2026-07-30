@@ -4,85 +4,53 @@ clusterGroup:
   sharedValueFiles:
   - /overrides/values-{{ $.Values.global.clusterPlatform }}.yaml
   namespaces:
-    vault: {}
-    external-secrets-operator:
-      operatorGroup: true
-      targetNamespaces: []
-    external-secrets: {}
     openshift-cnv:
       operatorGroup: true
       targetNamespaces:
       - openshift-cnv
-    rhbk-operator: {}
-    secure-agent-workspace: {}
+    openshell-agents:
+      operatorGroup: true
+      targetNamespaces:
+      - openshell-agents
   subscriptions:
     openshift-virtualization:
       name: kubevirt-hyperconverged
       namespace: openshift-cnv
+      channel: stable
     rhbk:
       name: rhbk-operator
-      namespace: rhbk-operator
-    openshift-external-secrets:
-      name: openshift-external-secrets-operator
-      namespace: external-secrets-operator
-      channel: stable-v1
+      namespace: openshell-agents
+      channel: stable-v26
   applications:
-    vault:
-      name: vault
-      namespace: vault
-      project: prod
-      chart: hashicorp-vault
-      chartVersion: 0.1.*
-    openshift-external-secrets:
-      name: openshift-external-secrets
-      namespace: external-secrets
-      project: prod
-      chart: openshift-external-secrets
-      chartVersion: 0.0.*
     openshift-cnv:
       name: openshift-cnv
-      namespace: secure-agent-workspace
+      namespace: openshift-cnv
       project: prod
       path: charts/openshift-cnv
-    keycloak-config:
-      name: keycloak-config
-      namespace: rhbk-operator
-      project: prod
-      path: charts/keycloak-config
-    secure-agent-workspace:
-      name: secure-agent-workspace
-      namespace: secure-agent-workspace
-      project: prod
-      repoURL: https://github.com/validatedpatterns-sandbox/secure-agent-workspace.git
-      path: chart
-      chartVersion: main
-    secure-agent-workspace-secrets:
-      name: secure-agent-workspace-secrets
-      namespace: secure-agent-workspace
-      project: prod
-      path: charts/secure-agent-workspace-secrets
     openshift-registry:
       name: openshift-registry
-      namespace: secure-agent-workspace
+      namespace: openshift-image-registry
       project: prod
       path: charts/openshift-registry
     openshell-keycloak:
       name: openshell-keycloak
-      namespace: secure-agent-workspace
+      namespace: openshell-agents
       project: prod
       path: charts/openshell-keycloak
     pattern-secrets:
       name: pattern-secrets
-      namespace: secure-agent-workspace
+      namespace: openshell-agents
       project: prod
       path: charts/pattern-secrets
     openshell-saw:
       name: openshell-saw
-      namespace: secure-agent-workspace
+      namespace: openshell-agents
       project: prod
       path: charts/openshell-saw
+      extraValueFiles:
+      - /overrides/openshell-saw.yaml
     image-builder:
       name: image-builder
-      namespace: secure-agent-workspace
+      namespace: build-saw-images
       project: prod
       path: charts/image-builder

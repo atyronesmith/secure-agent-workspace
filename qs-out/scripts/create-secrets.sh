@@ -8,17 +8,5 @@ NAMESPACE="${NAMESPACE:-secure-agent-workspace}"
 
 echo "Creating secrets for namespace: $NAMESPACE"
 
-# Secret: sandbox-ssh-private-key
-PRIVATE_KEY=$(openssl rand -base64 16 | tr -dc a-zA-Z0-9 | head -c 20)
-oc create secret generic sandbox-ssh-private-key \
-  --from-literal=private_key="${PRIVATE_KEY}"
-  -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
-
-# Secret: sandbox-ssh-public-key
-PUBLIC_KEY=$(openssl rand -base64 16 | tr -dc a-zA-Z0-9 | head -c 20)
-oc create secret generic sandbox-ssh-public-key \
-  --from-literal=public_key="${PUBLIC_KEY}"
-  -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
-
 echo "Secrets created successfully."
 echo "You can now run: helm install secure-agent-workspace ./chart -n $NAMESPACE"

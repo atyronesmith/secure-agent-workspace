@@ -1,10 +1,1 @@
 # Platform-specific overrides for Azure
-
-# Object storage backend for this platform.
-# Change provider to match your environment.
-# Providers: minio (in-cluster), odf (OpenShift Data Foundation), s3 (external S3)
-# objectStorage:
-#   provider: s3
-#   endpoint: https://<account>.blob.core.windows.net
-#   region: eastus
-#   bucket: <your-pre-existing-bucket-name>

@@ -8,13 +8,7 @@ quickpat:
   version: 0.1.0
   generated: '2026-07-30'
   strategy: remote
-  vault: true
-  source:
-    repo: https://github.com/validatedpatterns-sandbox/secure-agent-workspace.git
-    path: chart
-    branch: main
+  vault: false
   operators:
   - openshift-virtualization
   - rhbk
-  secret_groups:
-  - sandbox
