@@ -34,7 +34,7 @@ The `pattern.sh` script runs all make targets inside a podman-based utility cont
 - **Application name:** secure-agent-workspace
 - **Namespace:** secure-agent-workspace
 - **Chart strategy:** remote
-- **Vault enabled:** False
+- **Vault enabled:** True
 
 ## Deployment
 

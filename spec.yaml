@@ -97,52 +97,69 @@ blocks:
 
 # ── Secrets ──────────────────────────────────────────────────────────────────
 #
-# At least ONE inference provider key must be set. All others may be skipped.
-# onMissingValue: skip creates the ExternalSecret but leaves the Vault path
-# empty until the operator populates it — the sandbox will fail to start for
-# that provider until the key is loaded.
+# Each entry is one named secret group in Vault. The compiler generates
+# values-secret.yaml.template in VP v2 format from this list.
+# The ExternalSecrets themselves are in charts/pattern-secrets/.
+#
+# At least ONE inference provider key must be set before creating a sandbox.
 
 secrets:
-  - name: anthropic-api-key
+  # SSH keypair — generate with: make generate-keys
+  - name: ssh
+    vault_path: secure-agent-workspace/ssh
+    fields:
+      - name: private_key
+      - name: public_key
+
+  # Inference providers — set at least one
+  - name: anthropic
     vault_path: secure-agent-workspace/anthropic
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
-  - name: gemini-api-key
+  - name: gemini
     vault_path: secure-agent-workspace/gemini
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
-  - name: openai-api-key
+  - name: openai
     vault_path: secure-agent-workspace/openai
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
-  - name: nvidia-api-key
+  - name: nvidia
     vault_path: secure-agent-workspace/nvidia
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
-  - name: openrouter-api-key
+  - name: openrouter
     vault_path: secure-agent-workspace/openrouter
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
-  - name: vertex-sa-json
+  - name: vertex
     vault_path: secure-agent-workspace/vertex
-    key: sa_json
     onMissingValue: skip
+    fields:
+      - name: sa_json
 
   # Optional web search integrations
-  - name: tavily-api-key
+  - name: tavily
     vault_path: secure-agent-workspace/tavily
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
-  - name: brave-search-api-key
+  - name: brave-search
     vault_path: secure-agent-workspace/brave-search
-    key: api_key
     onMissingValue: skip
+    fields:
+      - name: api_key
 
 vault:
   enabled: true
@@ -213,8 +230,12 @@ custom:
   # used for per-user VM cloning.
   # Three sub-charts: nemoclaw-imagestream, nemoclaw-cli-imagestream,
   # openshell-gateway-image (all under image-builder-charts/helm/).
+  #
+  # deploy: manual — NOT an ArgoCD app. Applied once via Makefile:
+  #   make build && make build-cli && make build-gateway-image
   image-builder:
     description: Bootc image build pipeline — NemoClaw and OpenShell gateway VM image
+    deploy: manual
     source:
       chart: image-builder-charts/helm
     namespace: build-saw-images

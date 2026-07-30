@@ -4,6 +4,11 @@ clusterGroup:
   sharedValueFiles:
   - /overrides/values-{{ $.Values.global.clusterPlatform }}.yaml
   namespaces:
+    vault: {}
+    external-secrets-operator:
+      operatorGroup: true
+      targetNamespaces: []
+    external-secrets: {}
     openshift-cnv:
       operatorGroup: true
       targetNamespaces:
@@ -21,7 +26,23 @@ clusterGroup:
       name: rhbk-operator
       namespace: openshell-agents
       channel: stable-v26
+    openshift-external-secrets:
+      name: openshift-external-secrets-operator
+      namespace: external-secrets-operator
+      channel: stable-v1
   applications:
+    vault:
+      name: vault
+      namespace: vault
+      project: prod
+      chart: hashicorp-vault
+      chartVersion: 0.1.*
+    openshift-external-secrets:
+      name: openshift-external-secrets
+      namespace: external-secrets
+      project: prod
+      chart: openshift-external-secrets
+      chartVersion: 0.0.*
     openshift-cnv:
       name: openshift-cnv
       namespace: openshift-cnv
@@ -49,8 +70,3 @@ clusterGroup:
       path: charts/openshell-saw
       extraValueFiles:
       - /overrides/openshell-saw.yaml
-    image-builder:
-      name: image-builder
-      namespace: build-saw-images
-      project: prod
-      path: charts/image-builder
