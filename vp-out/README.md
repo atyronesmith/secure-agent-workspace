@@ -9,7 +9,7 @@ Isolated, per-user AI agent sandboxes on OpenShift Virtualization. Each user get
 ## What This Pattern Provides
 
 - GitOps deployment via ArgoCD
-- Operator lifecycle management (Red Hat Build of Keycloak, OpenShift Virtualization)
+- Operator lifecycle management (OpenShift Virtualization, Red Hat Build of Keycloak)
 - HashiCorp Vault secret management
 - Multi-cloud support (AWS, Azure, GCP, IBM Cloud)
 

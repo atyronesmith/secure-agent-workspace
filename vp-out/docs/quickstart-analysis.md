@@ -13,8 +13,8 @@ The following operators are automatically installed by the Validated Pattern:
 
 | Operator | Subscription | Channel | Source |
 |----------|-------------|---------|--------|
-| Red Hat Build of Keycloak | rhbk-operator | stable-v26 | redhat-operators |
 | OpenShift Virtualization | kubevirt-hyperconverged | stable | redhat-operators |
+| Red Hat Build of Keycloak | rhbk-operator | stable-v26 | redhat-operators |
 
 ## Framework Architecture
 
