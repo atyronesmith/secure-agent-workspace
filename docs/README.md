@@ -117,6 +117,7 @@ oc get dv openshell-gateway-golden -n build-saw-images
 
 ## Deploy
 
+<!-- vp-only -->
 ### Option A: Validated Pattern (automated, GitOps)
 
 Deploys everything — operators, Vault, ESO, Keycloak, secrets, and the default sandbox configuration — via ArgoCD. All resources are continuously reconciled.
@@ -143,7 +144,59 @@ oc get applications -n openshift-gitops
 cd vp-out
 ./pattern.sh make uninstall
 ```
+<!-- end -->
 
+<!-- qs-only -->
+### Option B: Quickstart (manual, step-by-step)
+
+Deploys components using Helm and Makefile targets. Useful when you want to inspect or modify each step before applying.
+
+```bash
+# 1. Verify prerequisites
+make check-prereqs
+
+# 2. Deploy Keycloak (RHBK operator must be installed from OperatorHub first)
+make keycloak
+
+# 3. Verify Keycloak is ready
+make keycloak-issuer
+curl -sk "$(make keycloak-issuer)/.well-known/openid-configuration" | python3 -m json.tool | head -5
+
+# 4. Authenticate
+make login     # opens browser → log in as alice / alice
+make whoami    # verify identity
+
+# 5. Create your first sandbox
+export OPENSHELL_SAW_NAME=alice-openshell-saw
+make openshell-saw-create \
+  PROVIDER=gemini \
+  MODEL=gemini-2.5-flash \
+  API_KEY=<your-api-key>
+
+# 6. Check status
+make openshell-saw-list
+oc get vmi -n openshell-agents
+# Wait for PHASE=Running, READY=True
+
+# 7. Configure the CLI
+make openshell-saw-configure-gateway
+
+# 8. Login to the gateway
+openshell gateway login
+
+# 9. Verify
+openshell --gateway-insecure sandbox list
+```
+
+> **Note:** The gateway VM uses a self-signed TLS certificate. Pass `--gateway-insecure` to `openshell` commands until you configure a real certificate.
+
+**Delete resources:**
+```bash
+make openshell-saw-delete     # delete a single sandbox
+make delete-keycloak          # delete Keycloak + PostgreSQL
+make delete-all               # delete all quickstart resources
+```
+<!-- end -->
 
 ## Supported inference providers
 

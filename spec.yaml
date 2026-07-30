@@ -386,6 +386,21 @@ custom:
       chart: image-builder-charts/helm
     namespace: build-saw-images        # ← image-builder-charts/helm/*/values.yaml: namespace
 
+# ── Docs ─────────────────────────────────────────────────────────────────────
+#
+# Source documentation in docs/ is processed into both vp-out/ and qs-out/.
+# Sections marked <!-- vp-only --> are stripped from the QS output.
+# Sections marked <!-- qs-only --> are stripped from the VP output.
+# Unmarked sections appear in both outputs unchanged.
+# Marker comment lines are always stripped — they don't appear in output.
+
+docs:
+  # Primary README — shared content with conditional install instructions.
+  # vp-only:  Option A (./pattern.sh make install)
+  # qs-only:  Option B (make keycloak, make openshell-saw-create, etc.)
+  - source: docs/README.md
+    target: README.md
+
 options:
   # ← values-global.yaml: main.multiSourceConfig.enabled: true
   # Required: the openshell-saw ArgoCD app uses extraValueFiles which depends
