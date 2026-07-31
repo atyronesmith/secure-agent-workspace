@@ -43,16 +43,16 @@ clusterGroup:
       project: prod
       chart: openshift-external-secrets
       chartVersion: 0.0.*
-    openshift-cnv:
-      name: openshift-cnv
-      namespace: openshift-cnv
-      project: prod
-      path: charts/openshift-cnv
     openshift-registry:
       name: openshift-registry
       namespace: openshift-image-registry
       project: prod
       path: charts/openshift-registry
+    openshift-cnv:
+      name: openshift-cnv
+      namespace: openshift-cnv
+      project: prod
+      path: charts/openshift-cnv
     openshell-keycloak:
       name: openshell-keycloak
       namespace: openshell-agents
