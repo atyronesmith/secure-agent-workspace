@@ -30,3 +30,104 @@ openshellSaw:
 imageBuilder:
   image: 
   replicas: 1
+
+# ── Values from included charts ──────────────────────────────────────
+postgres:
+  image: registry.redhat.io/rhel9/postgresql-16:latest
+  storage: 1Gi
+  database: keycloak
+  username: keycloak
+  password: keycloak-db-pass
+keycloak:
+  name: openshell-keycloak
+  instances: 1
+  hostname: ''
+  realm: openshell
+  registrationAllowed: true
+  clients:
+    cli:
+      clientId: openshell-cli
+      public: true
+      accessTokenLifespan: 86400
+  testUsers:
+  - username: developer
+    firstName: Developer
+    lastName: User
+    password: developer
+    roles:
+    - openshell-user
+  - username: admin
+    firstName: Admin
+    lastName: User
+    password: admin
+    roles:
+    - openshell-user
+    - openshell-admin
+  - username: alice
+    firstName: Alice
+    lastName: User
+    password: alice
+    roles:
+    - openshell-user
+    - openshell-admin
+  - username: bob
+    firstName: Bob
+    lastName: User
+    password: bob
+    roles:
+    - openshell-user
+    - openshell-admin
+  roles:
+  - openshell-user
+  - openshell-admin
+secretStoreRef:
+  name: vault-backend
+  kind: ClusterSecretStore
+refreshInterval: 15s
+vaultPrefix: secret/data/hub
+sandboxName: ''
+sshPublicKey: ''
+source:
+  dataSource: openshell-gateway
+  dataSourceNamespace: build-saw-images
+  registryURL: ''
+  httpURL: ''
+vm:
+  cores: 4
+  memory: 8Gi
+  diskSize: 40Gi
+sandboxImage: ''
+agent: openclaw
+onboardCli: openclaw
+inference:
+  provider: ''
+  model: ''
+  apiKey: ''
+  endpointUrl: ''
+  webSearch: ''
+  secretName: ''
+vertexSaJson: ''
+vertex:
+  region: global
+  model: claude-sonnet-4-6
+sshSecret: openshell-aap-ssh
+sshUser: cloud-user
+virtctlVersion: v1.4.1
+job:
+  image: registry.fedoraproject.org/fedora:44
+  backoffLimit: 2
+  activeDeadlineSeconds: 1800
+route:
+  enabled: false
+  host: ''
+  dashboard: false
+oidc:
+  token: ''
+  issuerUrl: ''
+  clientId: openshell-cli
+  passthrough: true
+  keycloakName: openshell-keycloak
+  realm: openshell
+accessControl:
+  owner: ''
+namespaceMode: shared
