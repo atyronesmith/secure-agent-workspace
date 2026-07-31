@@ -5,8 +5,8 @@ pattern_version: '1.0'
 display_name: Secure Agent Workspace
 tier: sandbox
 quickpat:
-  version: 0.1.0
-  generated: '2026-07-30'
+  version: 0.2.0
+  generated: '2026-07-31'
   strategy: remote
   vault: true
   operators:

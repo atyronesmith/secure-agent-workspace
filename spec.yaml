@@ -254,9 +254,9 @@ wiring:
   - from: virtualization
     to: sandbox
     via: kubevirt-runtime # sandbox VMs require the CNV hypervisor to be running
-  - from: image-builder
-    to: sandbox
-    via: cdi-datasource   # per-user VMs are CDI clones of the golden image
+  # Note: image-builder is a custom component (deploy: manual), not a block,
+  # so the CDI DataSource dependency cannot be expressed as a wiring entry.
+  # The relationship is documented in the image-builder component description.
 
 # ── Custom Components ─────────────────────────────────────────────────────────
 #
