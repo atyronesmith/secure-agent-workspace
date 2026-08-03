@@ -1,7 +1,8 @@
 # Required — must be set at install time.
 sandboxName: ""
 # SSH public key for VM access. Set explicitly, or leave empty to read
-# from the 'public_key' field in the sshSecret (created by ESO/pattern-secrets).
+# from the 'public_key' field in the sshSecret (created by ESO/pattern-secrets
+# on the VP path, or create-secrets.sh on the QS path).
 sshPublicKey: ""
 
 # VM disk source — three modes:
@@ -65,7 +66,7 @@ vertex:
 
 # SSH identity Secret for virtctl — must exist in the namespace.
 # The Secret should have a 'key' data field with the private key.
-sshSecret: openshell-aap-ssh
+sshSecret: ssh
 sshUser: cloud-user
 
 # Fallback virtctl version if auto-detection from the cluster fails.

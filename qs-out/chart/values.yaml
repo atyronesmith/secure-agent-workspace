@@ -115,7 +115,7 @@ vertexSaJson: ''
 vertex:
   region: global
   model: claude-sonnet-4-6
-sshSecret: openshell-aap-ssh
+sshSecret: ssh
 sshUser: cloud-user
 virtctlVersion: v1.4.1
 job:

@@ -6,7 +6,7 @@ display_name: Secure Agent Workspace
 tier: sandbox
 quickpat:
   version: 0.2.0
-  generated: '2026-07-31'
+  generated: '2026-08-03'
   strategy: remote
   vault: true
   operators:
