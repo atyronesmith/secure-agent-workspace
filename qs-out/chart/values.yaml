@@ -4,6 +4,16 @@
 # ── Secrets ──────────────────────────────────────────────────────────
 # Fill these in before helm install, or use scripts/create-secrets.sh
 secrets:
+  sshPrivateKey: ""
+  sshPublicKey: ""
+  anthropicApiKey: ""
+  geminiApiKey: ""
+  openaiApiKey: ""
+  nvidiaApiKey: ""
+  openrouterApiKey: ""
+  vertexSaJson: ""
+  tavilyApiKey: ""
+  braveSearchApiKey: ""
 
 # ── virtualization (openshift-virtualization) ──
 
@@ -80,11 +90,6 @@ keycloak:
   roles:
   - openshell-user
   - openshell-admin
-secretStoreRef:
-  name: vault-backend
-  kind: ClusterSecretStore
-refreshInterval: 15s
-vaultPrefix: secret/data/hub
 sandboxName: ''
 sshPublicKey: ''
 source:

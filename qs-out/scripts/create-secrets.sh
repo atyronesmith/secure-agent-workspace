@@ -8,5 +8,93 @@ NAMESPACE="${NAMESPACE:-secure-agent-workspace}"
 
 echo "Creating secrets for namespace: $NAMESPACE"
 
+# Secret: ssh
+read -rsp "Enter private_key for ssh: " PRIVATE_KEY; echo
+read -rsp "Enter public_key for ssh: " PUBLIC_KEY; echo
+oc create secret generic ssh \
+  --from-literal=private_key="${PRIVATE_KEY}" \
+  --from-literal=public_key="${PUBLIC_KEY}" \
+  -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+
+# Secret: anthropic  (optional — press Enter to skip)
+read -rsp "Enter api_key for anthropic (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic anthropic \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping anthropic (no value provided)."
+fi
+
+# Secret: gemini  (optional — press Enter to skip)
+read -rsp "Enter api_key for gemini (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic gemini \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping gemini (no value provided)."
+fi
+
+# Secret: openai  (optional — press Enter to skip)
+read -rsp "Enter api_key for openai (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic openai \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping openai (no value provided)."
+fi
+
+# Secret: nvidia  (optional — press Enter to skip)
+read -rsp "Enter api_key for nvidia (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic nvidia \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping nvidia (no value provided)."
+fi
+
+# Secret: openrouter  (optional — press Enter to skip)
+read -rsp "Enter api_key for openrouter (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic openrouter \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping openrouter (no value provided)."
+fi
+
+# Secret: vertex  (optional — press Enter to skip)
+read -rsp "Enter sa_json for vertex (optional): " SA_JSON; echo
+if [ -n "${SA_JSON}" ]; then
+  oc create secret generic vertex \
+    --from-literal=sa_json="${SA_JSON}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping vertex (no value provided)."
+fi
+
+# Secret: tavily  (optional — press Enter to skip)
+read -rsp "Enter api_key for tavily (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic tavily \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping tavily (no value provided)."
+fi
+
+# Secret: brave-search  (optional — press Enter to skip)
+read -rsp "Enter api_key for brave-search (optional): " API_KEY; echo
+if [ -n "${API_KEY}" ]; then
+  oc create secret generic brave-search \
+    --from-literal=api_key="${API_KEY}" \
+    -n "$NAMESPACE" --dry-run=client -o yaml | oc apply -f -
+else
+  echo "Skipping brave-search (no value provided)."
+fi
+
 echo "Secrets created successfully."
 echo "You can now run: helm install secure-agent-workspace ./chart -n $NAMESPACE"
