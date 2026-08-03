@@ -46,7 +46,7 @@ data:
     # --- Extract SSH identity from Secret ---
     echo "Extracting SSH identity..."
     SSH_KEY="${WORK_DIR}/id_ssh"
-    cp /ssh-key/key "${SSH_KEY}"
+    cp /ssh-key/private_key "${SSH_KEY}"
     chmod 600 "${SSH_KEY}"
 
     # --- Wait for DataVolume provisioning ---
