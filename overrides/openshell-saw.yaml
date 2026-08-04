@@ -1,0 +1,24 @@
+sandboxName: alice-openshell-saw
+
+# VM disk source — clone from golden image built in build-saw-images namespace
+source:
+  dataSource: openshell-gateway
+  dataSourceNamespace: build-saw-images
+
+# Sandbox container image (leave empty to auto-detect from internal registry)
+# sandboxImage: "quay.io/rh-ai-quickstart/nemoclaw-sandbox:latest"
+
+inference:
+  # DeepInfra (OpenAI-compatible). No first-class secret slot exists for it yet
+  # (FIELDCTO-TBD — see AGENTS.md); repurposing the unused `openrouter` slot.
+  provider: custom
+  model: moonshotai/Kimi-K2.7-Code
+  endpointUrl: https://api.deepinfra.com/v1/openai
+  secretName: openrouter
+
+accessControl:
+  owner: alice
+
+route:
+  enabled: true
+  dashboard: true
