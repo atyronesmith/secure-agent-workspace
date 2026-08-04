@@ -152,6 +152,15 @@ Two deployment paths are available:
 
 Deploys everything — operators, Vault, ESO, Keycloak, secrets, and the default sandbox configuration — via ArgoCD. All resources are continuously reconciled.
 
+**Important:** the Validated Patterns Operator's `Pattern` CRD has no field for a
+subdirectory path — it always clones the whole repo and expects `values-global.yaml`,
+`values-prod.yaml`, `Makefile`, `pattern.sh`, and `charts/` at the **repo root**. Since
+this repo nests all of that under `vp-out/` (the one-repo-both-paths model), a `Pattern`
+CR's ongoing GitOps reconciliation cannot find those files there directly — you must
+publish `vp-out/`'s content to a dedicated tag first. `./pattern.sh make install` itself
+will still succeed either way (it uses the local files directly), but the `Pattern` CR it
+creates will not reconcile until it's pointed at a published tag.
+
 ```bash
 # 1. Configure secrets (do NOT commit this file)
 cp vp-out/values-secret.yaml.template ~/values-secret.yaml
@@ -159,15 +168,24 @@ cp vp-out/values-secret.yaml.template ~/values-secret.yaml
 #   - Paste SSH keys from make generate-keys output (private_key, public_key)
 #   - Set at least one inference provider API key
 
-# 2. Deploy the pattern (runs inside the VP utility container)
+# 2. Commit vp-out/ (publish-vp refuses a dirty tree), then publish it to a
+#    versioned tag whose content sits at the tag's own root
+git add vp-out && git commit -m "Regenerate vp-out"
+quickpat publish-vp
+
+# 3. Deploy the pattern (runs inside the VP utility container)
 cd vp-out
 ./pattern.sh make install
+
+# 4. Repoint the Pattern CR at the tag from step 2 (printed by publish-vp)
+oc patch pattern secure-agent-workspace -n patterns-operator --type merge \
+  -p '{"spec":{"gitSpec":{"targetRevision":"vp-v1"}}}'
 ```
 
 After install, ArgoCD manages all resources. Monitor sync status:
 
 ```bash
-oc get applications -n openshift-gitops
+oc get applications -n vp-gitops
 ```
 
 
